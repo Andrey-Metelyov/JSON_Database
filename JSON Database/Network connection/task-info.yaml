@@ -92,6 +92,66 @@ files:
         }
     }
   learner_created: false
+- name: src/server/Database.java
+  visible: true
+  text: |
+    package server;
+
+    import java.util.Optional;
+
+    public interface Database {
+        boolean set(int index, String value);
+
+        Optional<String> get(int index);
+
+        boolean delete(int index);
+    }
+  learner_created: true
+- name: src/server/JsonDatabase.java
+  visible: true
+  text: |
+    package server;
+
+    import java.util.Arrays;
+    import java.util.Optional;
+
+    public class JsonDatabase implements Database {
+        private String[] data = new String[100];
+
+        public JsonDatabase() {
+            Arrays.fill(data, "");
+        }
+
+        @Override
+        public boolean set(int index, String value) {
+            if (index > data.length) {
+                return false;
+            }
+            data[index - 1] = value;
+            return true;
+        }
+
+        @Override
+        public Optional<String> get(int index) {
+            return (index > data.length || data[index - 1].isEmpty()) ? Optional.empty() : Optional.of(data[index - 1]);
+        }
+
+        @Override
+        public boolean delete(int index) {
+            if (index > data.length) {
+                return false;
+            }
+            data[index - 1] = "";
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/server/CommandProcessor.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/349/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Fri, 01 Jan 2021 02:32:57 UTC
 record: -1
