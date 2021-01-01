@@ -1,41 +1,44 @@
 package server;
 
 import java.util.Optional;
-import java.util.Scanner;
 
 public class CommandProcessor {
-    private JsonDatabase db = new JsonDatabase();
-    private Scanner scanner = new Scanner(System.in);
+    private final JsonDatabase db = new JsonDatabase();
 
-    void run() {
-        while (true) {
-            String input = scanner.nextLine();
-            if (input.equals("exit")) {
-                break;
-            }
-            String[] command = input.split(" ", 3);
-            if (command[0].equals("get")) {
+    String process(String input) {
+        String[] command = input.split(" ", 3);
+        String result;
+
+        switch (command[0]) {
+            case "get":
                 Optional<String> res = db.get(Integer.parseInt(command[1]));
                 if (res.isEmpty()) {
-                    System.out.println("ERROR");
+                    result = "ERROR";
                 } else {
-                    System.out.println(res.get());
+                    result = res.get();
                 }
-            } else if (command[0].equals("delete")) {
+                break;
+            case "delete":
                 if (db.delete(Integer.parseInt(command[1]))) {
-                    System.out.println("OK");
+                    result = "OK";
                 } else {
-                    System.out.println("ERROR");
+                    result = "ERROR";
                 }
-            } else if (command[0].equals("set")) {
+                break;
+            case "set":
                 int index = Integer.parseInt(command[1]);
                 String value = command[2];
                 if (db.set(index, value)) {
-                    System.out.println("OK");
+                    result = "OK";
                 } else {
-                    System.out.println("ERROR");
+                    result = "ERROR";
                 }
-            }
+                break;
+            default:
+                result = "ERROR";
+                break;
         }
+
+        return result;
     }
 }

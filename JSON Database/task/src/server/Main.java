@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Optional;
-import java.util.Scanner;
 
 public class Main {
 
@@ -15,19 +13,25 @@ public class Main {
         System.out.println("Server started!");
 
         String address = "127.0.0.1";
-        int port = 23456;
+        int port = 23458;
         ServerSocket server = new ServerSocket(port, 50, InetAddress.getByName(address));
-        Socket socket = server.accept();
-        DataInputStream input = new DataInputStream(socket.getInputStream());
-        DataOutputStream output  = new DataOutputStream(socket.getOutputStream());
-//        while (true) {
+        CommandProcessor commandProcessor = new CommandProcessor();
+        while (true) {
+            Socket socket = server.accept();
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            DataOutputStream output  = new DataOutputStream(socket.getOutputStream());
             String command = input.readUTF();
+            if (command.equals("exit")) {
+                output.writeUTF("OK");
+                break;
+            }
             System.out.println("Received: " + command);
-            int index = Integer.parseInt(command.substring(command.lastIndexOf(" ") + 1));
-
-            String answer = "A record # " + index + " was sent!";
+            String answer = commandProcessor.process(command);
             output.writeUTF(answer);
             System.out.println("Sent: " + answer);
-//        }
+            socket.close();
+        }
+        server.close();
+        System.out.println("Server closed!");
     }
 }
