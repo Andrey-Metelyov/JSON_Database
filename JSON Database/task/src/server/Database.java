@@ -3,9 +3,9 @@ package server;
 import java.util.Optional;
 
 public interface Database {
-    boolean set(int index, String value);
+    boolean set(String index, String value);
 
-    Optional<String> get(int index);
+    Optional<String> get(String index);
 
-    boolean delete(int index);
+    boolean delete(String index);
 }

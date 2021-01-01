@@ -1,41 +1,42 @@
 package server;
 
+import com.google.gson.Gson;
+import request.Request;
+
 import java.util.Optional;
 
 public class CommandProcessor {
     private final JsonDatabase db = new JsonDatabase();
 
-    String process(String input) {
-        String[] command = input.split(" ", 3);
+    String process(Request input) {
+        String command = input.getType();
         String result;
 
-        switch (command[0]) {
+        switch (command) {
             case "get":
-                Optional<String> res = db.get(Integer.parseInt(command[1]));
+                Optional<String> res = db.get(input.getKey());
                 if (res.isEmpty()) {
-                    result = "ERROR";
+                    result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
                 } else {
-                    result = res.get();
+                    result = "{\"response\":\"OK\",\"value\":\"" + res.get() + "\"}";
                 }
                 break;
             case "delete":
-                if (db.delete(Integer.parseInt(command[1]))) {
-                    result = "OK";
+                if (db.delete(input.getKey())) {
+                    result = "{\"response\":\"OK\"}";;
                 } else {
-                    result = "ERROR";
+                    result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
                 }
                 break;
             case "set":
-                int index = Integer.parseInt(command[1]);
-                String value = command[2];
-                if (db.set(index, value)) {
-                    result = "OK";
+                if (db.set(input.getKey(), input.getValue())) {
+                    result = "{\"response\":\"OK\"}";
                 } else {
-                    result = "ERROR";
+                    result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
                 }
                 break;
             default:
-                result = "ERROR";
+                result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
                 break;
         }
 

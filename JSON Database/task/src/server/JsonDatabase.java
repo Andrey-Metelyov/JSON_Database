@@ -1,35 +1,35 @@
 package server;
 
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class JsonDatabase implements Database {
-    private String[] data = new String[100];
+    private Map<String, String> data = new HashMap<>();
 
     public JsonDatabase() {
-        Arrays.fill(data, "");
     }
 
     @Override
-    public boolean set(int index, String value) {
-        if (index > data.length) {
-            return false;
-        }
-        data[index - 1] = value;
+    public boolean set(String index, String value) {
+        data.put(index, value);
         return true;
     }
 
     @Override
-    public Optional<String> get(int index) {
-        return (index > data.length || data[index - 1].isEmpty()) ? Optional.empty() : Optional.of(data[index - 1]);
+    public Optional<String> get(String index) {
+        if (data.containsKey(index)) {
+            return Optional.of(data.get(index));
+        }
+        return Optional.empty();
     }
 
     @Override
-    public boolean delete(int index) {
-        if (index > data.length) {
-            return false;
+    public boolean delete(String index) {
+        if (data.containsKey(index)) {
+            data.remove(index);
+            return true;
         }
-        data[index - 1] = "";
-        return true;
+        return false;
     }
 }

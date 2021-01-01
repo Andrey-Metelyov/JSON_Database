@@ -2,6 +2,8 @@ package client;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.gson.Gson;
+import request.Request;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -18,10 +20,10 @@ public class Main {
     @Parameter(names = "-t", description = "The type of the request")
     private String type;
 
-    @Parameter(names = "-i", description = "The index of the cell")
-    private Integer index;
+    @Parameter(names = "-k", description = "The index of the cell")
+    private String index;
 
-    @Parameter(names = "-m", description = "The value to save in the database")
+    @Parameter(names = "-v", description = "The value to save in the database")
     private String value;
 
     public static void main(String[] args) throws IOException {
@@ -35,6 +37,8 @@ public class Main {
 
     private void run() throws IOException {
         System.out.println(type);
+        System.out.println(index);
+        System.out.println(value);
 
         System.out.println("Client started!");
 
@@ -44,23 +48,25 @@ public class Main {
         DataInputStream input = new DataInputStream(socket.getInputStream());
         DataOutputStream output = new DataOutputStream(socket.getOutputStream());
 //        while (true) {
-        String request;
+        Gson gson = new Gson();
+        Request request;
         switch (type) {
             case "get":
             case "delete":
-                request = type + " " + index;
+                request = new Request(type, index);
                 break;
             case "set":
-                request = type + " " + index + " " + value;
+                request = new Request(type, index, value);
                 break;
             case "exit":
-                request = type;
+                request = new Request(type);
                 break;
             default:
                 return;
         }
-        output.writeUTF(request);
-        System.out.println("Sent: " + request);
+        String string = gson.toJson(request);
+        output.writeUTF(string);
+        System.out.println("Sent: " + string);
 
         String answer = input.readUTF();
         System.out.println("Received: " + answer);

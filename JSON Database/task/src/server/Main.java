@@ -1,5 +1,8 @@
 package server;
 
+import com.google.gson.Gson;
+import request.Request;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -21,12 +24,14 @@ public class Main {
             DataInputStream input = new DataInputStream(socket.getInputStream());
             DataOutputStream output  = new DataOutputStream(socket.getOutputStream());
             String command = input.readUTF();
-            if (command.equals("exit")) {
-                output.writeUTF("OK");
+            Gson gson = new Gson();
+            Request request = gson.fromJson(command, Request.class);
+            if (request.getType().equals("exit")) {
+                output.writeUTF("{\"response\":\"OK\"}");
                 break;
             }
             System.out.println("Received: " + command);
-            String answer = commandProcessor.process(command);
+            String answer = commandProcessor.process(request);
             output.writeUTF(answer);
             System.out.println("Sent: " + answer);
             socket.close();
