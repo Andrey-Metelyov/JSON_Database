@@ -586,6 +586,156 @@ files:
         }
     }
   learner_created: false
+- name: src/server/Database.java
+  visible: true
+  text: |
+    package server;
+
+    import java.util.Optional;
+
+    public interface Database {
+        boolean set(String index, String value);
+
+        Optional<String> get(String index);
+
+        boolean delete(String index);
+    }
+  learner_created: true
+- name: src/server/JsonDatabase.java
+  visible: true
+  text: |
+    package server;
+
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.Optional;
+
+    public class JsonDatabase implements Database {
+        private Map<String, String> data = new HashMap<>();
+
+        public JsonDatabase() {
+        }
+
+        @Override
+        public boolean set(String index, String value) {
+            data.put(index, value);
+            return true;
+        }
+
+        @Override
+        public Optional<String> get(String index) {
+            if (data.containsKey(index)) {
+                return Optional.of(data.get(index));
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean delete(String index) {
+            if (data.containsKey(index)) {
+                data.remove(index);
+                return true;
+            }
+            return false;
+        }
+    }
+  learner_created: true
+- name: src/request/Request.java
+  visible: true
+  text: |
+    package request;
+
+    public class Request {
+        String type;
+        String key;
+        String value;
+
+        public Request(String type, String key, String value) {
+            this.type = type;
+            this.key = key;
+            this.value = value;
+        }
+
+        public Request(String type, String key) {
+            this.type = type;
+            this.key = key;
+        }
+
+        public Request(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+  learner_created: true
+- name: src/server/CommandProcessor.java
+  visible: true
+  text: |
+    package server;
+
+    import com.google.gson.Gson;
+    import request.Request;
+
+    import java.util.Optional;
+
+    public class CommandProcessor {
+        private final JsonDatabase db = new JsonDatabase();
+
+        String process(Request input) {
+            String command = input.getType();
+            String result;
+
+            switch (command) {
+                case "get":
+                    Optional<String> res = db.get(input.getKey());
+                    if (res.isEmpty()) {
+                        result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
+                    } else {
+                        result = "{\"response\":\"OK\",\"value\":\"" + res.get() + "\"}";
+                    }
+                    break;
+                case "delete":
+                    if (db.delete(input.getKey())) {
+                        result = "{\"response\":\"OK\"}";;
+                    } else {
+                        result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
+                    }
+                    break;
+                case "set":
+                    if (db.set(input.getKey(), input.getValue())) {
+                        result = "{\"response\":\"OK\"}";
+                    } else {
+                        result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
+                    }
+                    break;
+                default:
+                    result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
+                    break;
+            }
+
+            return result;
+        }
+    }
+  learner_created: true
+- name: src/server/ClientHandler.java
+  visible: true
+  learner_created: true
+- name: src/request/Response.java
+  visible: true
+  learner_created: true
+- name: src/server/Server.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/352/implement#comment
 status: Unchecked
 record: -1

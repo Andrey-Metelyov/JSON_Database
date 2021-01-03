@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.gson.Gson;
 import request.Request;
+import request.Response;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,10 +29,37 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         Main main = new Main();
-        JCommander.newBuilder()
-                .addObject(main)
-                .build()
-                .parse(args);
+//        JCommander.newBuilder()
+//                .addObject(main)
+//                .build()
+//                .parse(args);
+        main.type = "get";
+        main.index = "1";
+        main.run();
+
+        main.type = "set";
+        main.index = "1";
+        main.value = "HelloWorld!";
+        main.run();
+
+        main.type = "get";
+        main.index = "1";
+        main.run();
+
+        main.type = "set";
+        main.index = "name";
+        main.value = "Kate";
+        main.run();
+
+        main.type = "get";
+        main.index = "name";
+        main.run();
+
+        main.type = "delete";
+        main.index = "name";
+        main.run();
+
+        main.type = "exit";
         main.run();
     }
 
@@ -69,7 +97,9 @@ public class Main {
         System.out.println("Sent: " + string);
 
         String answer = input.readUTF();
+        Response response = new Gson().fromJson(answer, Response.class);
         System.out.println("Received: " + answer);
+        System.out.println("Received: " + response);
         socket.close();
     }
 }
