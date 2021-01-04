@@ -11,6 +11,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,46 +29,49 @@ public class Main {
     @Parameter(names = "-v", description = "The value to save in the database")
     private String value;
 
+    @Parameter(names = "-in", description = "Filename to read from")
+    private String filename;
+
     public static void main(String[] args) throws IOException {
         Main main = new Main();
-//        JCommander.newBuilder()
-//                .addObject(main)
-//                .build()
-//                .parse(args);
-        main.type = "get";
-        main.index = "1";
-        main.run();
+        JCommander.newBuilder()
+                .addObject(main)
+                .build()
+                .parse(args);
+//        main.type = "get";
+//        main.index = "1";
+//        main.run();
+//
+//        main.type = "set";
+//        main.index = "1";
+//        main.value = "HelloWorld!";
+//        main.run();
+//
+//        main.type = "get";
+//        main.index = "1";
+//        main.run();
+//
+//        main.type = "set";
+//        main.index = "name";
+//        main.value = "Kate";
+//        main.run();
+//
+//        main.type = "get";
+//        main.index = "name";
+//        main.run();
 
-        main.type = "set";
-        main.index = "1";
-        main.value = "HelloWorld!";
-        main.run();
+//        main.type = "delete";
+//        main.index = "name";
+//        main.run();
 
-        main.type = "get";
-        main.index = "1";
-        main.run();
-
-        main.type = "set";
-        main.index = "name";
-        main.value = "Kate";
-        main.run();
-
-        main.type = "get";
-        main.index = "name";
-        main.run();
-
-        main.type = "delete";
-        main.index = "name";
-        main.run();
-
-        main.type = "exit";
+//        main.type = "exit";
         main.run();
     }
 
     private void run() throws IOException {
-        System.out.println(type);
-        System.out.println(index);
-        System.out.println(value);
+//        System.out.println(type);
+//        System.out.println(index);
+//        System.out.println(value);
 
         System.out.println("Client started!");
 
@@ -78,19 +83,27 @@ public class Main {
 //        while (true) {
         Gson gson = new Gson();
         Request request;
-        switch (type) {
-            case "get":
-            case "delete":
-                request = new Request(type, index);
-                break;
-            case "set":
-                request = new Request(type, index, value);
-                break;
-            case "exit":
-                request = new Request(type);
-                break;
-            default:
-                return;
+        if (filename != null) {
+            String path = ".\\src\\client\\data\\" + filename;
+            System.out.println("Read from file: " + path);
+            System.out.println(Path.of(path).toAbsolutePath());
+            String content = Files.readString(Path.of(path));
+            request = gson.fromJson(content, Request.class);
+        } else {
+            switch (type) {
+                case "get":
+                case "delete":
+                    request = new Request(type, index);
+                    break;
+                case "set":
+                    request = new Request(type, index, value);
+                    break;
+                case "exit":
+                    request = new Request(type);
+                    break;
+                default:
+                    return;
+            }
         }
         String string = gson.toJson(request);
         output.writeUTF(string);
@@ -99,7 +112,7 @@ public class Main {
         String answer = input.readUTF();
         Response response = new Gson().fromJson(answer, Response.class);
         System.out.println("Received: " + answer);
-        System.out.println("Received: " + response);
+//        System.out.println("Received: " + response);
         socket.close();
     }
 }

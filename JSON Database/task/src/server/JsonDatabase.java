@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class JsonDatabase implements Database {
-    private File file = new File("db.json");
+    private File file = new File(".\\task\\src\\server\\data\\db.json");
     private Map<String, String> data = new HashMap<>();
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private Lock readLock = lock.readLock();
@@ -21,11 +21,15 @@ public class JsonDatabase implements Database {
     public JsonDatabase() {
         readLock.lock();
         try {
+//            System.out.println(file.getAbsolutePath());
             FileReader reader = new FileReader(file);
             String content = Files.readString(file.toPath());
-            System.out.println("Read from file:");
-            System.out.println(content);
-            data = new Gson().fromJson(content, data.getClass());
+//            System.out.println("Read from file:");
+//            System.out.println(content);
+            Map<String, String> dataFromJson = new Gson().fromJson(content, data.getClass());
+            if (dataFromJson != null) {
+                data = dataFromJson;
+            }
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -33,11 +37,12 @@ public class JsonDatabase implements Database {
             readLock.unlock();
         }
         System.out.println("database init complete");
+        System.out.println("loaded " + data.size() + " records");
     }
 
     @Override
     public boolean set(String index, String value) {
-        System.out.println("set(" + index + "," + value + ")");
+//        System.out.println("set(" + index + "," + value + ")");
         writeLock.lock();
         data.put(index, value);
         updateFile();
@@ -49,8 +54,8 @@ public class JsonDatabase implements Database {
         try {
             FileWriter writer = new FileWriter(file);
             String content = new Gson().toJson(data);
-            System.out.println("Writing to file:");
-            System.out.println(content);
+//            System.out.println("Writing to file:");
+//            System.out.println(content);
             writer.write(content);
             writer.close();
         } catch (IOException e) {
@@ -60,7 +65,7 @@ public class JsonDatabase implements Database {
 
     @Override
     public Optional<String> get(String index) {
-        System.out.println("get(" + index + ")");
+//        System.out.println("get(" + index + ")");
         Optional<String> result;
         readLock.lock();
         if (data.containsKey(index)) {
@@ -69,13 +74,13 @@ public class JsonDatabase implements Database {
             result = Optional.empty();
         }
         readLock.unlock();
-        System.out.println("result = " + result);
+//        System.out.println("result = " + result);
         return result;
     }
 
     @Override
     public boolean delete(String index) {
-        System.out.println("delete(" + index + ")");
+//        System.out.println("delete(" + index + ")");
         boolean result = false;
         writeLock.lock();
         if (data.containsKey(index)) {

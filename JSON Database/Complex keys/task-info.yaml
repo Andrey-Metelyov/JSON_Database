@@ -286,6 +286,379 @@ files:
         }
     }
   learner_created: false
+- name: src/server/Database.java
+  visible: true
+  text: |
+    package server;
+
+    import java.util.Optional;
+
+    public interface Database {
+        boolean set(String index, String value);
+
+        Optional<String> get(String index);
+
+        boolean delete(String index);
+    }
+  learner_created: true
+- name: src/request/Response.java
+  visible: true
+  text: |
+    package request;
+
+    public class Response {
+        String response;
+        String value;
+        String reason;
+
+        public String getResponse() {
+            return response;
+        }
+
+        public void setResponse(String response) {
+            this.response = response;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        public String getReason() {
+            return reason;
+        }
+
+        public void setReason(String reason) {
+            this.reason = reason;
+        }
+    }
+  learner_created: true
+- name: src/client/data/testGet.json
+  visible: true
+  text: '{"type":"get","key":"name"}'
+  learner_created: true
+- name: src/server/JsonDatabase.java
+  visible: true
+  text: |
+    package server;
+
+    import com.google.gson.Gson;
+
+    import java.io.*;
+    import java.nio.file.Files;
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.Optional;
+    import java.util.concurrent.locks.Lock;
+    import java.util.concurrent.locks.ReadWriteLock;
+    import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+    public class JsonDatabase implements Database {
+        private File file = new File(".\\task\\src\\server\\data\\db.json");
+        private Map<String, String> data = new HashMap<>();
+        private ReadWriteLock lock = new ReentrantReadWriteLock();
+        private Lock readLock = lock.readLock();
+        private Lock writeLock = lock.writeLock();
+
+        public JsonDatabase() {
+            readLock.lock();
+            try {
+    //            System.out.println(file.getAbsolutePath());
+                FileReader reader = new FileReader(file);
+                String content = Files.readString(file.toPath());
+    //            System.out.println("Read from file:");
+    //            System.out.println(content);
+                Map<String, String> dataFromJson = new Gson().fromJson(content, data.getClass());
+                if (dataFromJson != null) {
+                    data = dataFromJson;
+                }
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                readLock.unlock();
+            }
+            System.out.println("database init complete");
+            System.out.println("loaded " + data.size() + " records");
+        }
+
+        @Override
+        public boolean set(String index, String value) {
+    //        System.out.println("set(" + index + "," + value + ")");
+            writeLock.lock();
+            data.put(index, value);
+            updateFile();
+            writeLock.unlock();
+            return true;
+        }
+
+        private void updateFile() {
+            try {
+                FileWriter writer = new FileWriter(file);
+                String content = new Gson().toJson(data);
+    //            System.out.println("Writing to file:");
+    //            System.out.println(content);
+                writer.write(content);
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public Optional<String> get(String index) {
+    //        System.out.println("get(" + index + ")");
+            Optional<String> result;
+            readLock.lock();
+            if (data.containsKey(index)) {
+                result = Optional.of(data.get(index));
+            } else {
+                result = Optional.empty();
+            }
+            readLock.unlock();
+    //        System.out.println("result = " + result);
+            return result;
+        }
+
+        @Override
+        public boolean delete(String index) {
+    //        System.out.println("delete(" + index + ")");
+            boolean result = false;
+            writeLock.lock();
+            if (data.containsKey(index)) {
+                data.remove(index);
+                result = true;
+                updateFile();
+            }
+            writeLock.unlock();
+            return result;
+        }
+    }
+  learner_created: true
+- name: src/server/Server.java
+  visible: true
+  text: |
+    package server;
+
+    import java.io.IOException;
+    import java.net.InetAddress;
+    import java.net.ServerSocket;
+    import java.net.Socket;
+    import java.util.concurrent.ExecutorService;
+    import java.util.concurrent.Executors;
+
+    public class Server {
+        private String address = "127.0.0.1";
+        private int port = 23458;
+        private ServerSocket server;
+
+        void start() throws IOException {
+            server = new ServerSocket(port, 50, InetAddress.getByName(address));
+            ExecutorService threadPool = Executors.newFixedThreadPool(4);
+            CommandProcessor commandProcessor = new CommandProcessor();
+            System.out.println("Server started!");
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    Socket socket = server.accept();
+                    threadPool.submit(new ClientHandler(socket, commandProcessor, this));
+                }
+            } finally {
+                threadPool.shutdown();
+                server.close();
+                System.out.println("Server closed!");
+            }
+        }
+
+        public void stop() {
+            try {
+                server.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+  learner_created: true
+- name: src/server/CommandProcessor.java
+  visible: true
+  text: |
+    package server;
+
+    import com.google.gson.Gson;
+    import com.google.gson.GsonBuilder;
+    import com.google.gson.JsonElement;
+    import com.google.gson.JsonObject;
+    import request.Request;
+    import request.Response;
+
+    import java.util.Optional;
+
+    public class CommandProcessor {
+        private final JsonDatabase db = new JsonDatabase();
+
+        String process(Request input) {
+            String command = input.getType();
+            String result;
+            Response response = new Response();
+
+            switch (command) {
+                case "get":
+                    Optional<String> res = db.get(input.getKey());
+                    if (res.isEmpty()) {
+                        result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
+                        response.setResponse("ERROR");
+                        response.setReason("No such key");
+                    } else {
+                        result = "{\"response\":\"OK\",\"value\":\"" + res.get() + "\"}";
+                        response.setResponse("OK");
+                        response.setValue(res.get());
+                    }
+                    break;
+                case "delete":
+                    if (db.delete(input.getKey())) {
+                        result = "{\"response\":\"OK\"}";;
+                        response.setResponse("OK");
+                    } else {
+                        result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
+                        response.setResponse("ERROR");
+                        response.setReason("No such key");
+                    }
+                    break;
+                case "set":
+                    if (db.set(input.getKey(), input.getValue())) {
+                        result = "{\"response\":\"OK\"}";
+                        response.setResponse("OK");
+                    } else {
+                        result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
+                        response.setResponse("ERROR");
+                        response.setReason("hz");
+                    }
+                    break;
+                case "exit":
+                    response.setResponse("OK");
+                    break;
+                default:
+                    result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
+                    response.setResponse("ERROR");
+                    response.setReason("hz");
+                    break;
+            }
+
+            return new Gson().toJson(response);
+        }
+
+        public static void main(String[] args) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("type", "set");
+            obj.addProperty("key", "name");
+            obj.addProperty("value", "Kate");
+            System.out.println(obj);
+            System.out.println(obj.get("type").getAsString());
+            System.out.println(obj.get("typer").getAsString());
+        }
+    }
+  learner_created: true
+- name: src/server/ClientHandler.java
+  visible: true
+  text: |
+    package server;
+
+    import com.google.gson.Gson;
+    import request.Request;
+
+    import java.io.DataInputStream;
+    import java.io.DataOutputStream;
+    import java.io.IOException;
+    import java.net.Socket;
+
+    public class ClientHandler implements Runnable {
+        private final Socket socket;
+        private final CommandProcessor commandProcessor;
+        private final Server server;
+
+        public ClientHandler(Socket socket, CommandProcessor commandProcessor, Server server) {
+            this.socket = socket;
+            this.commandProcessor = commandProcessor;
+            this.server = server;
+        }
+
+        @Override
+        public void run() {
+            try {
+                DataInputStream input = new DataInputStream(socket.getInputStream());
+                DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+
+                String command = input.readUTF();
+
+                Request request = new Gson().fromJson(command, Request.class);
+                System.out.println("Received: " + command);
+
+                String answer = commandProcessor.process(request);
+
+                output.writeUTF(answer);
+                System.out.println("Sent: " + answer);
+                socket.close();
+                if (request.getType().equals("exit")) {
+                    server.stop();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+  learner_created: true
+- name: src/request/Request.java
+  visible: true
+  text: |
+    package request;
+
+    public class Request {
+        String type;
+        String key;
+        String value;
+
+        public Request(String type, String key, String value) {
+            this.type = type;
+            this.key = key;
+            this.value = value;
+        }
+
+        public Request(String type, String key) {
+            this.type = type;
+            this.key = key;
+        }
+
+        public Request(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+  learner_created: true
+- name: src/client/data/testSet.json
+  visible: true
+  text: '{"type":"set","key":"name","value":"Kate"}'
+  learner_created: true
+- name: src/client/data/testDelete.json
+  visible: true
+  text: '{"type":"delete","key":"name"}'
+  learner_created: true
+- name: src/server/data/db.json
+  visible: true
+  text: '{}'
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/353/implement#comment
 status: Unchecked
 record: -1
