@@ -65,11 +65,18 @@ public class CommandProcessor {
 
     public static void main(String[] args) {
         JsonObject obj = new JsonObject();
+        JsonObject rocket = new JsonObject();
+
+        rocket.addProperty("name", "Falcon 9");
+        rocket.addProperty("launches", "88");
+
         obj.addProperty("type", "set");
         obj.addProperty("key", "name");
         obj.addProperty("value", "Kate");
+        obj.add("rocket", rocket);
+        System.out.println(obj.get("rocket"));
+        System.out.println(obj.get("['rocket','launches']"));
+
         System.out.println(obj);
-        System.out.println(obj.get("type").getAsString());
-        System.out.println(obj.get("typer").getAsString());
     }
 }

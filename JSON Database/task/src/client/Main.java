@@ -65,6 +65,28 @@ public class Main {
 //        main.run();
 
 //        main.type = "exit";
+        main.type = "set";
+        main.index = "person";
+        main.value = "{\n" +
+                "\"name\":\"Elon Musk\",\n" +
+                "\"car\":{\n" +
+                "   \"model\":\"Tesla Roadster\",\n" +
+                "   \"year\":\"2018\"\n" +
+                "},\n" +
+                "\"rocket\":{\n" +
+                "   \"name\":\"Falcon 9\",\n" +
+                "   \"launches\":\"87\"\n" +
+                "}\n" +
+                "}";
+        main.run();
+
+        main.type = "get";
+        main.index = "['person', 'name']";
+        main.run();
+
+        main.type = "set";
+        main.index = "['person', 'rocket', 'launches']";
+        main.value = "88";
         main.run();
     }
 

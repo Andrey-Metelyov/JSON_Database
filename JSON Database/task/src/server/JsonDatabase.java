@@ -1,6 +1,6 @@
 package server;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -44,7 +44,33 @@ public class JsonDatabase implements Database {
     public boolean set(String index, String value) {
 //        System.out.println("set(" + index + "," + value + ")");
         writeLock.lock();
-        data.put(index, value);
+        JsonElement json = JsonParser.parseString(index);
+        if (!json.isJsonArray()) {
+            System.out.println("(set) Not an array!");
+            data.put(index, value);
+        } else {
+            System.out.println("(set) Array!!!");
+            JsonArray array = json.getAsJsonArray();
+            System.out.println("array = " + array);
+            System.out.println("data = " + data);
+            String key = array.get(0).getAsString();
+            System.out.println("key = " + key);
+            if (data.containsKey(key)) {
+                JsonObject valueObject = JsonParser.parseString(data.get(key)).getAsJsonObject();
+                System.out.println("valueObject = " + valueObject);
+                for (int i = 1; i < array.size() - 1; i++) {
+                    key = array.get(i).getAsString();
+                    if (valueObject.has(key)) {
+                        JsonElement element = valueObject.get(key);
+                        if (element.isJsonObject()) {
+                            valueObject = element.getAsJsonObject();
+                        }
+                    }
+                }
+
+            }
+        }
+//        json.
         updateFile();
         writeLock.unlock();
         return true;
@@ -68,10 +94,44 @@ public class JsonDatabase implements Database {
 //        System.out.println("get(" + index + ")");
         Optional<String> result;
         readLock.lock();
-        if (data.containsKey(index)) {
-            result = Optional.of(data.get(index));
+        JsonElement json = JsonParser.parseString(index);
+        if (!json.isJsonArray()) {
+            System.out.println("(get) Not an array!");
+            if (data.containsKey(index)) {
+                result = Optional.of(data.get(index));
+            } else {
+                result = Optional.empty();
+            }
         } else {
-            result = Optional.empty();
+            System.out.println("(get) Array!!!");
+            JsonArray array = json.getAsJsonArray();
+            System.out.println("array = " + array);
+            System.out.println("data = " + data);
+            String key = array.get(0).getAsString();
+            System.out.println("key = " + key);
+            if (data.containsKey(key)) {
+                JsonObject value = JsonParser.parseString(data.get(key)).getAsJsonObject();
+                System.out.println("value = " + value);
+                result = Optional.empty();
+                for (int i = 1; i < array.size(); i++) {
+                    key = array.get(i).getAsString();
+                    if (value.has(key)) {
+                        JsonElement element = value.get(key);
+                        if (element.isJsonObject()) {
+                            value = element.getAsJsonObject();
+                            System.out.println("value = " + value);
+                            result = Optional.of(value.getAsString());
+                        } else {
+                            result = Optional.of(element.getAsString());
+                        }
+                    } else {
+                        result = Optional.empty();
+                        break;
+                    }
+                }
+            } else {
+                result = Optional.empty();
+            }
         }
         readLock.unlock();
 //        System.out.println("result = " + result);
@@ -83,10 +143,16 @@ public class JsonDatabase implements Database {
 //        System.out.println("delete(" + index + ")");
         boolean result = false;
         writeLock.lock();
-        if (data.containsKey(index)) {
-            data.remove(index);
-            result = true;
-            updateFile();
+        JsonElement json = JsonParser.parseString(index);
+        if (!json.isJsonArray()) {
+            System.out.println("(delete) Not an array!");
+            if (data.containsKey(index)) {
+                data.remove(index);
+                result = true;
+                updateFile();
+            }
+        } else {
+            System.out.println("(delete) Array!!!");
         }
         writeLock.unlock();
         return result;
