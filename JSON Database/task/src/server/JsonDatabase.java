@@ -12,93 +12,126 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class JsonDatabase implements Database {
-    private File file = new File(".\\task\\src\\server\\data\\db.json");
-    private Map<String, String> data = new HashMap<>();
+    private File file = new File(".\\src\\server\\data\\db.json");
+//    private Map<String, JsonElement> data = new HashMap<>();
+    private JsonObject data;
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private Lock readLock = lock.readLock();
     private Lock writeLock = lock.writeLock();
 
     public JsonDatabase() {
+//        readLock.lock();
+//        try {
+////            System.out.println(file.getAbsolutePath());
+//            FileReader reader = new FileReader(file);
+//            String content = Files.readString(file.toPath());
+////            System.out.println("Read from file:");
+////            System.out.println(content);
+//            Map<String, String> dataFromJson = new Gson().fromJson(content, data.getClass());
+//            if (dataFromJson != null) {
+//                data = dataFromJson;
+//            }
+//            reader.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            readLock.unlock();
+//        }
+//        System.out.println("database init complete");
+//        System.out.println("loaded " + data.size() + " records");
         readLock.lock();
+        Gson gson = new Gson();
         try {
-//            System.out.println(file.getAbsolutePath());
-            FileReader reader = new FileReader(file);
-            String content = Files.readString(file.toPath());
-//            System.out.println("Read from file:");
-//            System.out.println(content);
-            Map<String, String> dataFromJson = new Gson().fromJson(content, data.getClass());
-            if (dataFromJson != null) {
-                data = dataFromJson;
+            System.out.println(file.getAbsolutePath());
+            data = gson.fromJson(new FileReader(file), JsonObject.class);
+            if (data == null) {
+                 data = new JsonObject();
             }
-            reader.close();
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
             readLock.unlock();
         }
-        System.out.println("database init complete");
-        System.out.println("loaded " + data.size() + " records");
     }
 
     @Override
-    public boolean set(String index, String value) {
-//        System.out.println("set(" + index + "," + value + ")");
+    public boolean set(String key, String value) {
+        System.out.println("set(" + key + ", " + value + ")");
         writeLock.lock();
-        JsonElement json = JsonParser.parseString(index);
-        if (!json.isJsonArray()) {
+        System.out.println(data);
+        data.addProperty(key, value);
+        System.out.println(data);
+/*        JsonElement jsonIndex = JsonParser.parseString(index);
+        if (!jsonIndex.isJsonArray()) {
             System.out.println("(set) Not an array!");
-            data.put(index, value);
+            try {
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.addProperty("value", value);
+                System.out.println(jsonObject);
+                data.put(index, jsonObject);
+//                System.out.println("jsonElement = " + jsonElement);
+//                if (data.putIfAbsent(index, jsonElement) != null) {
+//                    data.replace(index, jsonElement);
+//                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println(data);
         } else {
             System.out.println("(set) Array!!!");
-            JsonArray array = json.getAsJsonArray();
+            JsonArray array = jsonIndex.getAsJsonArray();
             System.out.println("array = " + array);
             System.out.println("data = " + data);
             String key = array.get(0).getAsString();
+            JsonObject jsonObject = data.get(key).getAsJsonObject();
             System.out.println("key = " + key);
-            if (data.containsKey(key)) {
-                JsonObject valueObject = JsonParser.parseString(data.get(key)).getAsJsonObject();
-                System.out.println("valueObject = " + valueObject);
-                for (int i = 1; i < array.size() - 1; i++) {
-                    key = array.get(i).getAsString();
-                    if (valueObject.has(key)) {
-                        JsonElement element = valueObject.get(key);
-                        if (element.isJsonObject()) {
-                            valueObject = element.getAsJsonObject();
-                        }
+            for (int i = 1; i < array.size() - 1; i++) {
+                key = array.get(i).getAsString();
+                if (jsonObject.has(key)) {
+                    JsonElement element = jsonObject.get(key);
+                    if (element.isJsonObject()) {
+                        jsonObject = element.getAsJsonObject();
                     }
                 }
-
             }
-        }
-//        json.
+            key = array.get(array.size() - 1).getAsString();
+            jsonObject.addProperty(key, value);
+            System.out.println("data after modification = " + data);
+        }*/
         updateFile();
         writeLock.unlock();
         return true;
     }
 
     private void updateFile() {
+//        writeLock.lock();
         try {
-            FileWriter writer = new FileWriter(file);
-            String content = new Gson().toJson(data);
-//            System.out.println("Writing to file:");
-//            System.out.println(content);
-            writer.write(content);
-            writer.close();
+            Gson gson = new Gson();
+            System.out.println("writing to file: " + data);
+            System.out.println(file.getAbsolutePath());
+            gson.toJson(data, new FileWriter(file));
         } catch (IOException e) {
             e.printStackTrace();
         }
+//        finally {
+//            writeLock.unlock();
+//        }
     }
 
     @Override
-    public Optional<String> get(String index) {
+    public Optional<String> get(String key) {
 //        System.out.println("get(" + index + ")");
-        Optional<String> result;
+        Optional<String> result = Optional.empty();
         readLock.lock();
-        JsonElement json = JsonParser.parseString(index);
+        JsonElement element = data.get(key);
+        if (element != null) {
+            result = Optional.of(element.getAsString());
+        }
+/*        JsonElement json = JsonParser.parseString(index);
         if (!json.isJsonArray()) {
             System.out.println("(get) Not an array!");
             if (data.containsKey(index)) {
-                result = Optional.of(data.get(index));
+                result = Optional.of(data.get(index).getAsString());
             } else {
                 result = Optional.empty();
             }
@@ -110,7 +143,7 @@ public class JsonDatabase implements Database {
             String key = array.get(0).getAsString();
             System.out.println("key = " + key);
             if (data.containsKey(key)) {
-                JsonObject value = JsonParser.parseString(data.get(key)).getAsJsonObject();
+                JsonObject value = data.get(key).getAsJsonObject();
                 System.out.println("value = " + value);
                 result = Optional.empty();
                 for (int i = 1; i < array.size(); i++) {
@@ -133,6 +166,7 @@ public class JsonDatabase implements Database {
                 result = Optional.empty();
             }
         }
+        */
         readLock.unlock();
 //        System.out.println("result = " + result);
         return result;
@@ -143,17 +177,17 @@ public class JsonDatabase implements Database {
 //        System.out.println("delete(" + index + ")");
         boolean result = false;
         writeLock.lock();
-        JsonElement json = JsonParser.parseString(index);
-        if (!json.isJsonArray()) {
-            System.out.println("(delete) Not an array!");
-            if (data.containsKey(index)) {
-                data.remove(index);
-                result = true;
-                updateFile();
-            }
-        } else {
-            System.out.println("(delete) Array!!!");
-        }
+//        JsonElement json = JsonParser.parseString(index);
+//        if (!json.isJsonArray()) {
+//            System.out.println("(delete) Not an array!");
+//            if (data.containsKey(index)) {
+//                data.remove(index);
+//                result = true;
+//                updateFile();
+//            }
+//        } else {
+//            System.out.println("(delete) Array!!!");
+//        }
         writeLock.unlock();
         return result;
     }

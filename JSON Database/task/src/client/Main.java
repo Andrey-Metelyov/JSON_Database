@@ -65,28 +65,28 @@ public class Main {
 //        main.run();
 
 //        main.type = "exit";
-        main.type = "set";
-        main.index = "person";
-        main.value = "{\n" +
-                "\"name\":\"Elon Musk\",\n" +
-                "\"car\":{\n" +
-                "   \"model\":\"Tesla Roadster\",\n" +
-                "   \"year\":\"2018\"\n" +
-                "},\n" +
-                "\"rocket\":{\n" +
-                "   \"name\":\"Falcon 9\",\n" +
-                "   \"launches\":\"87\"\n" +
-                "}\n" +
-                "}";
-        main.run();
-
-        main.type = "get";
-        main.index = "['person', 'name']";
-        main.run();
-
-        main.type = "set";
-        main.index = "['person', 'rocket', 'launches']";
-        main.value = "88";
+//        main.type = "set";
+//        main.index = "person";
+//        main.value = "{\n" +
+//                "\"name\":\"Elon Musk\",\n" +
+//                "\"car\":{\n" +
+//                "   \"model\":\"Tesla Roadster\",\n" +
+//                "   \"year\":\"2018\"\n" +
+//                "},\n" +
+//                "\"rocket\":{\n" +
+//                "   \"name\":\"Falcon 9\",\n" +
+//                "   \"launches\":\"87\"\n" +
+//                "}\n" +
+//                "}";
+//        main.run();
+//
+//        main.type = "get";
+//        main.index = "['person', 'name']";
+//        main.run();
+//
+//        main.type = "set";
+//        main.index = "['person', 'rocket', 'launches']";
+//        main.value = "88";
         main.run();
     }
 
@@ -105,12 +105,15 @@ public class Main {
 //        while (true) {
         Gson gson = new Gson();
         Request request;
+        String string;
         if (filename != null) {
             String path = ".\\src\\client\\data\\" + filename;
             System.out.println("Read from file: " + path);
             System.out.println(Path.of(path).toAbsolutePath());
-            String content = Files.readString(Path.of(path));
-            request = gson.fromJson(content, Request.class);
+            string = Files.readString(Path.of(path));
+            System.out.println("string = " + string);
+//            request = gson.fromJson(content, Request.class);
+//            System.out.println(request);
         } else {
             switch (type) {
                 case "get":
@@ -126,15 +129,15 @@ public class Main {
                 default:
                     return;
             }
+            string = gson.toJson(request);
         }
-        String string = gson.toJson(request);
         output.writeUTF(string);
         System.out.println("Sent: " + string);
 
         String answer = input.readUTF();
         Response response = new Gson().fromJson(answer, Response.class);
         System.out.println("Received: " + answer);
-//        System.out.println("Received: " + response);
+        System.out.println("Client closed");
         socket.close();
     }
 }

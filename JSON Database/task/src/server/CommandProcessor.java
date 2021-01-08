@@ -13,6 +13,7 @@ public class CommandProcessor {
     private final JsonDatabase db = new JsonDatabase();
 
     String process(Request input) {
+        System.out.println("input = " + input);
         String command = input.getType();
         String result;
         Response response = new Response();

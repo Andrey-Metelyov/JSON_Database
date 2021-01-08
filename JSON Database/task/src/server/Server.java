@@ -20,6 +20,7 @@ public class Server {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 Socket socket = server.accept();
+                System.out.println("New connection: " + socket);
                 threadPool.submit(new ClientHandler(socket, commandProcessor, this));
             }
         } finally {
