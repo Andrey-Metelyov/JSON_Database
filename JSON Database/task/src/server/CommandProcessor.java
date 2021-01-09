@@ -1,67 +1,59 @@
 package server;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import request.Request;
-import request.Response;
 
 import java.util.Optional;
 
 public class CommandProcessor {
     private final JsonDatabase db = new JsonDatabase();
 
-    String process(Request input) {
-        System.out.println("input = " + input);
-        String command = input.getType();
-        String result;
-        Response response = new Response();
+    String process(JsonObject request) {
+        System.out.println("Sinput = " + request);
+        String command = request.get("type").getAsString();
+        JsonElement key = request.get("key");
+        JsonObject response = new JsonObject();
 
         switch (command) {
             case "get":
-                Optional<String> res = db.get(input.getKey());
+                Optional<JsonElement> res = db.get(key);
                 if (res.isEmpty()) {
-                    result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
-                    response.setResponse("ERROR");
-                    response.setReason("No such key");
+                    response.addProperty("response", "ERROR");
+                    response.addProperty("reason", "No such key");
                 } else {
-                    result = "{\"response\":\"OK\",\"value\":\"" + res.get() + "\"}";
-                    response.setResponse("OK");
-                    response.setValue(res.get());
+                    response.addProperty("response", "OK");
+                    response.add("value", res.get());
                 }
                 break;
             case "delete":
-                if (db.delete(input.getKey())) {
-                    result = "{\"response\":\"OK\"}";;
-                    response.setResponse("OK");
+                if (db.delete(key)) {
+                    response.addProperty("response", "OK");
                 } else {
-                    result = "{\"response\":\"ERROR\",\"reason\":\"No such key\"}";
-                    response.setResponse("ERROR");
-                    response.setReason("No such key");
+                    response.addProperty("response", "ERROR");
+                    response.addProperty("reason", "No such key");
                 }
                 break;
             case "set":
-                if (db.set(input.getKey(), input.getValue())) {
-                    result = "{\"response\":\"OK\"}";
-                    response.setResponse("OK");
+                JsonElement value = request.get("value");
+                if (db.set(key, value)) {
+                    response.addProperty("response", "OK");
                 } else {
-                    result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
-                    response.setResponse("ERROR");
-                    response.setReason("hz");
+                    response.addProperty("response", "ERROR");
+                    response.addProperty("reason", "hz");
                 }
                 break;
             case "exit":
-                response.setResponse("OK");
+                response.addProperty("response", "OK");
                 break;
             default:
-                result = "{\"response\":\"ERROR\",\"reason\":\"hz\"}";
-                response.setResponse("ERROR");
-                response.setReason("hz");
+                response.addProperty("response", "ERROR");
+                response.addProperty("reason", "hz");
                 break;
         }
-
-        return new Gson().toJson(response);
+        String answer = new Gson().toJson(response);
+        System.out.println("SAnswer: " + answer);
+        return answer;
     }
 
     public static void main(String[] args) {

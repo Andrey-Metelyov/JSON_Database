@@ -663,44 +663,8 @@ files:
   visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/353/implement#comment
-status: Failed
+status: Solved
 feedback:
-  message: |-
-    Error in test #3
-
-    In this test, the program is running for a long time, more than 15 seconds. Most likely, the program has gone into an infinite loop.
-
-    Please find below the output of your program during this failed test.
-
-    ---
-
-    Arguments for Main: -t set -k 1 -v &quot;Hello world!&quot;
-    Arguments for Main: -in setFile.json
-
-    D:\Projects\JSON Database\JSON Database\task\.\src\server\data\db.json
-    Client started!
-    Server started!
-    New connection: Socket[addr=/127.0.0.1,port=57454,localport=23458]
-    Sent: {&quot;type&quot;:&quot;set&quot;,&quot;key&quot;:&quot;1&quot;,&quot;value&quot;:&quot;Hello world!&quot;}
-    Received: {&quot;type&quot;:&quot;set&quot;,&quot;key&quot;:&quot;1&quot;,&quot;value&quot;:&quot;Hello world!&quot;}
-    input = Request{type=&#39;set&#39;, key=&#39;1&#39;, value=&#39;Hello world!&#39;}
-    set(1, Hello world!)
-    {}
-    {&quot;1&quot;:&quot;Hello world!&quot;}
-    writing to file: {&quot;1&quot;:&quot;Hello world!&quot;}
-    D:\Projects\JSON Database\JSON Database\task\.\src\server\data\db.json
-    Sent: {&quot;response&quot;:&quot;OK&quot;}
-    Received: {&quot;response&quot;:&quot;OK&quot;}
-    Client closed
-    Connection closing: Socket[addr=/127.0.0.1,port=57454,localport=23458]
-    Client started!
-    New connection: Socket[addr=/127.0.0.1,port=57455,localport=23458]
-    Read from file: .\src\client\data\setFile.json
-    D:\Projects\JSON Database\JSON Database\task\.\src\client\data\setFile.json
-    string = {&quot;type&quot;:&quot;set&quot;,&quot;key&quot;:&quot;person&quot;,&quot;value&quot;:{&quot;name&quot;:&quot;Elon Musk&quot;,&quot;car&quot;:{&quot;model&quot;:&quot;Tesla Roadster&quot;,&quot;year&quot;:&quot;2018&quot;},&quot;rocket&quot;:{&quot;name&quot;:&quot;Falcon 9&quot;,&quot;launches&quot;:&quot;87&quot;}}}
-
-    Received: {&quot;type&quot;:&quot;set&quot;,&quot;key&quot;:&quot;person&quot;,&quot;value&quot;:{&quot;name&quot;:&quot;Elon Musk&quot;,&quot;car&quot;:{&quot;model&quot;:&quot;Tesla Roadster&quot;,&quot;year&quot;:&quot;2018&quot;},&quot;rocket&quot;:{&quot;name&quot;:&quot;Falcon 9&quot;,&quot;launches&quot;:&quot;87&quot;}}}
-
-    Sent: {&quot;type&quot;:&quot;set&quot;,&quot;key&quot;:&quot;person&quot;,&quot;value&quot;:{&quot;name&quot;:&quot;Elon Musk&quot;,&quot;car&quot;:{&quot;model&quot;:&quot;Tesla Roadster&quot;,&quot;year&quot;:&quot;2018&quot;},&quot;rocket&quot;:{&quot;name&quot;:&quot;Falcon 9&quot;,&quot;launches&quot;:&quot;87&quot;}}}
-  time: Fri, 08 Jan 2021 15:30:46 UTC
+  message: Congratulations!
+  time: Sat, 09 Jan 2021 05:43:33 UTC
 record: 6
